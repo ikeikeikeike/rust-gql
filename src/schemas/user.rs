@@ -1,7 +1,7 @@
 use r2d2_mysql::mysql::prelude::*;
 use r2d2_mysql::mysql::{from_row, params};
 
-use crate::schemas::product::Product;
+use crate::schemas::organization::Organization;
 use crate::schemas::root::Context;
 
 /// User
@@ -24,11 +24,15 @@ impl User {
         &self.email
     }
 
-    fn products(&self, context: &Context) -> Vec<Product> {
+    fn organizations(&self, context: &Context) -> Vec<Organization> {
         let mut conn = context.dbpool.get().unwrap();
 
+        // ;;select id, identifier from organizations where user_id=:user_id
         conn.exec_iter(
-            "select * from product where user_id=:user_id",
+            "select o.id, o.identifier from organizations o
+             join users_organizations as uo on o.id = uo.organization_id
+             where uo.user_id = :user_id
+            ",
             params! {
                 "user_id" => &self.id
             },
@@ -37,13 +41,8 @@ impl User {
             result
                 .map(|x| x.unwrap())
                 .map(|mut row| {
-                    let (id, user_id, name, price) = from_row(row);
-                    Product {
-                        id,
-                        user_id,
-                        name,
-                        price,
-                    }
+                    let (id, identifier) = from_row(row);
+                    Organization { id, identifier }
                 })
                 .collect()
         })
