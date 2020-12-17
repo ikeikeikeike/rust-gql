@@ -7,19 +7,19 @@ use crate::schemas::user::User;
 /// Product
 #[derive(Default, Debug)]
 pub struct Product {
-    pub id: String,
-    pub user_id: String,
+    pub id: Option<i32>,
+    pub user_id: i32,
     pub name: String,
     pub price: f64,
 }
 
 #[juniper::object(Context = Context)]
 impl Product {
-    fn id(&self) -> &str {
-        &self.id
+    fn id(&self) -> Option<i32> {
+        self.id
     }
-    fn user_id(&self) -> &str {
-        &self.user_id
+    fn user_id(&self) -> i32 {
+        self.user_id
     }
     fn name(&self) -> &str {
         &self.name
@@ -31,7 +31,7 @@ impl Product {
     fn user(&self, context: &Context) -> Option<User> {
         let mut conn = context.dbpool.get().unwrap();
         let user: Result<Option<Row>, DBError> = conn.exec_first(
-            "SELECT * FROM user WHERE id=:id",
+            "SELECT * FROM users WHERE id=:id",
             params! {"id" => &self.user_id},
         );
         if let Err(err) = user {
@@ -46,7 +46,7 @@ impl Product {
 #[derive(GraphQLInputObject)]
 #[graphql(description = "Product Input")]
 pub struct ProductInput {
-    pub user_id: String,
+    pub user_id: i32,
     pub name: String,
     pub price: f64,
 }

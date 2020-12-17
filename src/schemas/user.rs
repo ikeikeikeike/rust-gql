@@ -7,7 +7,7 @@ use crate::schemas::root::Context;
 /// User
 #[derive(Default, Debug)]
 pub struct User {
-    pub id: String,
+    pub id: Option<i32>,
     pub name: String,
     pub email: String,
 }
@@ -21,8 +21,8 @@ pub struct UserInput {
 
 #[juniper::object(Context = Context)]
 impl User {
-    fn id(&self) -> &str {
-        &self.id
+    fn id(&self) -> Option<i32> {
+        self.id
     }
     fn name(&self) -> &str {
         &self.name

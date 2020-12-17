@@ -21,13 +21,17 @@ impl QueryRoot {
     fn users(context: &Context) -> FieldResult<Vec<User>> {
         let mut conn = context.dbpool.get().unwrap();
         let users = conn
-            .exec_iter("select * from user", ())
+            .exec_iter("select id, identifier, email from users", ())
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
                     .map(|mut row| {
-                        let (id, name, email) = from_row(row);
-                        User { id, name, email }
+                        let (id, identifier, email) = from_row(row);
+                        User {
+                            id,
+                            name: identifier,
+                            email,
+                        }
                     })
                     .collect()
             })
@@ -40,7 +44,7 @@ impl QueryRoot {
         let mut conn = context.dbpool.get().unwrap();
 
         let user: Result<Option<Row>, DBError> =
-            conn.exec_first("SELECT * FROM user WHERE id=:id", params! {"id" => id});
+            conn.exec_first("SELECT * from users WHERE id=:id", params! {"id" => id});
 
         if let Err(err) = user {
             return Err(FieldError::new(
@@ -80,7 +84,7 @@ impl QueryRoot {
     fn product(context: &Context, id: String) -> FieldResult<Product> {
         let mut conn = context.dbpool.get().unwrap();
         let product: Result<Option<Row>, DBError> =
-            conn.exec_first("SELECT * FROM user WHERE id=:id", params! {"id" => id});
+            conn.exec_first("SELECT * from users WHERE id=:id", params! {"id" => id});
         if let Err(err) = product {
             return Err(FieldError::new(
                 "Product Not Found",
@@ -104,12 +108,12 @@ pub struct MutationRoot;
 impl MutationRoot {
     fn create_user(context: &Context, user: UserInput) -> FieldResult<User> {
         let mut conn = context.dbpool.get().unwrap();
-        let new_id = uuid::Uuid::new_v4().to_simple().to_string();
+        // let new_id = uuid::Uuid::new_v4().to_simple().to_string();
 
         let insert: Result<Option<Row>, DBError> = conn.exec_first(
-            "INSERT INTO user(id, name, email) VALUES(:id, :name, :email)",
+            "INSERT INTO users(name, email) VALUES(:name, :email)",
             params! {
-                "id" => &new_id,
+                // "id" => &new_id,
                 "name" => &user.name,
                 "email" => &user.email,
             },
@@ -117,7 +121,7 @@ impl MutationRoot {
 
         match insert {
             Ok(opt_row) => Ok(User {
-                id: new_id,
+                id: None,
                 name: user.name,
                 email: user.email,
             }),
@@ -139,9 +143,9 @@ impl MutationRoot {
         let new_id = uuid::Uuid::new_v4().to_simple().to_string();
 
         let insert: Result<Option<Row>, DBError> = conn.exec_first(
-            "INSERT INTO product(id, user_id, name, price) VALUES(:id, :user_id, :name, :price)",
+            "INSERT INTO product(user_id, name, price) VALUES(:user_id, :name, :price)",
             params! {
-                "id" => &new_id,
+                // "id" => &new_id,
                 "user_id" => &product.user_id,
                 "name" => &product.name,
                 "price" => &product.price.to_owned(),
@@ -150,7 +154,7 @@ impl MutationRoot {
 
         match insert {
             Ok(opt_row) => Ok(Product {
-                id: new_id,
+                id: None,
                 user_id: product.user_id,
                 name: product.name,
                 price: product.price,
