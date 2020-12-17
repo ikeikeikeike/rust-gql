@@ -4,8 +4,8 @@ use r2d2_mysql::mysql::{from_row, params, Error as DBError, Row};
 
 use crate::db::Pool;
 
-use super::product::{Product, ProductInput};
-use super::user::{User, UserInput};
+use super::product::Product;
+use super::user::User;
 
 pub struct Context {
     pub dbpool: Pool,
@@ -18,10 +18,13 @@ pub struct QueryRoot;
 #[juniper::object(Context = Context)]
 impl QueryRoot {
     #[graphql(description = "List of all users")]
-    fn users(context: &Context) -> FieldResult<Vec<User>> {
+    fn users(context: &Context, limit: i32, offset: i32) -> FieldResult<Vec<User>> {
         let mut conn = context.dbpool.get().unwrap();
         let users = conn
-            .exec_iter("select id, identifier, email from users", ())
+            .exec_iter(
+                "select id, identifier, email from users limit :limit offset :offset",
+                params! {"limit" => limit, "offset" => offset},
+            )
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
@@ -57,11 +60,14 @@ impl QueryRoot {
         Ok(User { id, name, email })
     }
 
-    #[graphql(description = "List of all users")]
-    fn products(context: &Context) -> FieldResult<Vec<Product>> {
+    #[graphql(description = "List of all products")]
+    fn products(context: &Context, limit: i32, offset: i32) -> FieldResult<Vec<Product>> {
         let mut conn = context.dbpool.get().unwrap();
         let products = conn
-            .exec_iter("select * from product", ())
+            .exec_iter(
+                "select * from product limit :limit offset :offset",
+                params! {"limit" => limit, "offset" => offset},
+            )
             .map(|result| {
                 result
                     .map(|x| x.unwrap())
@@ -85,6 +91,7 @@ impl QueryRoot {
         let mut conn = context.dbpool.get().unwrap();
         let product: Result<Option<Row>, DBError> =
             conn.exec_first("SELECT * from users WHERE id=:id", params! {"id" => id});
+
         if let Err(err) = product {
             return Err(FieldError::new(
                 "Product Not Found",
@@ -105,73 +112,7 @@ impl QueryRoot {
 pub struct MutationRoot;
 
 #[juniper::object(Context = Context)]
-impl MutationRoot {
-    fn create_user(context: &Context, user: UserInput) -> FieldResult<User> {
-        let mut conn = context.dbpool.get().unwrap();
-        // let new_id = uuid::Uuid::new_v4().to_simple().to_string();
-
-        let insert: Result<Option<Row>, DBError> = conn.exec_first(
-            "INSERT INTO users(name, email) VALUES(:name, :email)",
-            params! {
-                // "id" => &new_id,
-                "name" => &user.name,
-                "email" => &user.email,
-            },
-        );
-
-        match insert {
-            Ok(opt_row) => Ok(User {
-                id: None,
-                name: user.name,
-                email: user.email,
-            }),
-            Err(err) => {
-                let msg = match err {
-                    DBError::MySqlError(err) => err.message,
-                    _ => "internal error".to_owned(),
-                };
-                Err(FieldError::new(
-                    "Failed to create new user",
-                    graphql_value!({ "internal_error": msg }),
-                ))
-            }
-        }
-    }
-
-    fn create_product(context: &Context, product: ProductInput) -> FieldResult<Product> {
-        let mut conn = context.dbpool.get().unwrap();
-        let new_id = uuid::Uuid::new_v4().to_simple().to_string();
-
-        let insert: Result<Option<Row>, DBError> = conn.exec_first(
-            "INSERT INTO product(user_id, name, price) VALUES(:user_id, :name, :price)",
-            params! {
-                // "id" => &new_id,
-                "user_id" => &product.user_id,
-                "name" => &product.name,
-                "price" => &product.price.to_owned(),
-            },
-        );
-
-        match insert {
-            Ok(opt_row) => Ok(Product {
-                id: None,
-                user_id: product.user_id,
-                name: product.name,
-                price: product.price,
-            }),
-            Err(err) => {
-                let msg = match err {
-                    DBError::MySqlError(err) => err.message,
-                    _ => "internal error".to_owned(),
-                };
-                Err(FieldError::new(
-                    "Failed to create new product",
-                    graphql_value!({ "internal_error": msg }),
-                ))
-            }
-        }
-    }
-}
+impl MutationRoot {}
 
 pub type Schema = RootNode<'static, QueryRoot, MutationRoot>;
 

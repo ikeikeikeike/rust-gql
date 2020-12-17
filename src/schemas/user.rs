@@ -12,13 +12,6 @@ pub struct User {
     pub email: String,
 }
 
-#[derive(GraphQLInputObject)]
-#[graphql(description = "User Input")]
-pub struct UserInput {
-    pub name: String,
-    pub email: String,
-}
-
 #[juniper::object(Context = Context)]
 impl User {
     fn id(&self) -> Option<i32> {

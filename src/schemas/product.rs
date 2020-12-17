@@ -42,11 +42,3 @@ impl Product {
         }
     }
 }
-
-#[derive(GraphQLInputObject)]
-#[graphql(description = "Product Input")]
-pub struct ProductInput {
-    pub user_id: i32,
-    pub name: String,
-    pub price: f64,
-}
