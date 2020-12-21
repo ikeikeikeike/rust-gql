@@ -358,33 +358,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "auba-gql"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-web",
- "anyhow",
- "dotenv",
- "either",
- "env_logger",
- "failure",
- "fallible-iterator",
- "futures",
- "itertools",
- "itertools-num",
- "juniper",
- "log",
- "mysql 20.1.0",
- "r2d2",
- "r2d2_mysql",
- "serde",
- "serde_derive",
- "serde_json",
- "thiserror",
- "uuid 0.8.1",
-]
-
-[[package]]
 name = "autocfg"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1958,6 +1931,33 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error",
+]
+
+[[package]]
+name = "rust-gql"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-web",
+ "anyhow",
+ "dotenv",
+ "either",
+ "env_logger",
+ "failure",
+ "fallible-iterator",
+ "futures",
+ "itertools",
+ "itertools-num",
+ "juniper",
+ "log",
+ "mysql 20.1.0",
+ "r2d2",
+ "r2d2_mysql",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror",
+ "uuid 0.8.1",
 ]
 
 [[package]]
